@@ -79,7 +79,54 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    details = {}
+    filename = f"html_files/listing_{listing_id}.html"
+    with open(filename, 'r', encoding="utf-8-sig") as file:
+        content = file.read()
+        soup = BeautifulSoup(content, 'html.parser')
+        #policy parsing
+        lis=soup.find_all('li')
+        for li in lis:
+            if "policy number" in li.get_text().lower():
+                policy_info = re.search(r"Policy number: (.*)", li.get_text()).group(1)
+                break
+        policy_number= lambda x: policy_info if "pending" not in policy_info.lower() and "exempt" not in policy_info.lower() else "Pending" if "pending" in policy_info.lower() else "Exempt"
+        #host type parsing
+        host_type = "Superhost" if soup.find("span", class_="_1mhorg9") else "Regular Host"
+        #host name parsing
+        host_name = "not found"
+        buttons = soup.find_all('button')
+        for button in buttons:
+            if "superhost" in button.get('aria-label', '').lower():
+                host_name = re.search(r"(.*) is", button.get('aria-label', '')).group(1)
+                break
+        #room type parsing
+        subs = soup.find_all(["h1", "h2"])
+        for sub in subs:
+            if "private room" in sub.get_text().lower():
+                room_type = "Private Room"
+                break
+            elif "shared room" in sub.get_text().lower():
+                room_type = "Shared Room"
+                break
+            else:
+                room_type = "Entire Room"
+                break
+        #location rating parsing
+        location_rating = 0.0
+        divs = soup.find_all("div", class_="_y1ba89")
+        for div in divs:
+            if "location" in div.get_text().lower():
+                location_rating = re.search(r"^(\d\.\d?)", div.next_sibling.get_text()).group(1)
+                break
+        details[listing_id] = {
+            "policy_number": policy_number(policy_info),
+            "host_type": host_type,
+            "host_name": host_name,
+            "room_type": room_type,
+            "location_rating": location_rating
+        }
+    return details
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -218,7 +265,14 @@ class TestCases(unittest.TestCase):
         # 1) Check that listing 467507 has the correct policy number "STR-0005349".
         # 2) Check that listing 1944564 has the correct host type "Superhost" and room type "Entire Room".
         # 3) Check that listing 1944564 has the correct location rating 4.9.
-        pass
+        for listing_id in html_list:
+            details = get_listing_details(listing_id)
+            if listing_id == "467507":
+                self.assertEqual(details[listing_id]["policy_number"], "STR-0005349")
+            elif listing_id == "1944564":
+                self.assertEqual(details[listing_id]["host_type"], "Superhost")
+                self.assertEqual(details[listing_id]["room_type"], "Entire Room")
+                self.assertEqual(details[listing_id]["location_rating"], str(4.9))
 
     def test_create_listing_database(self):
         # TODO: Check that each tuple in detailed_data has exactly 7 elements:
