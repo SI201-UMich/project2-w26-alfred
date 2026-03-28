@@ -117,7 +117,9 @@ def get_listing_details(listing_id) -> dict:
         divs = soup.find_all("div", class_="_y1ba89")
         for div in divs:
             if "location" in div.get_text().lower():
-                location_rating = re.search(r"^(\d\.\d?)", div.next_sibling.get_text()).group(1)
+                t = re.search(r"^(\d\.\d?)", div.next_sibling.get_text())
+                if t:
+                    location_rating = float(t.group(1))
                 break
         details[listing_id] = {
             "policy_number": policy_number(policy_info),
@@ -147,7 +149,12 @@ def create_listing_database(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    listings = load_listing_results(html_path)
+    database = []
+    for title, listing_id in listings:
+        details = get_listing_details(listing_id)[listing_id]
+        database.append((title, listing_id, details["policy_number"], details["host_type"], details["host_name"], details["room_type"], details["location_rating"]))
+    return database
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -272,14 +279,16 @@ class TestCases(unittest.TestCase):
             elif listing_id == "1944564":
                 self.assertEqual(details[listing_id]["host_type"], "Superhost")
                 self.assertEqual(details[listing_id]["room_type"], "Entire Room")
-                self.assertEqual(details[listing_id]["location_rating"], str(4.9))
+                self.assertEqual(details[listing_id]["location_rating"], 4.9)
 
     def test_create_listing_database(self):
         # TODO: Check that each tuple in detailed_data has exactly 7 elements:
         # (listing_title, listing_id, policy_number, host_type, host_name, room_type, location_rating)
-
+        for item in self.detailed_data:
+            self.assertEqual(len(item), 7)
         # TODO: Spot-check the LAST tuple is ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8).
-        pass
+
+        self.assertEqual(self.detailed_data[-1], ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8))
 
     def test_output_csv(self):
         out_path = os.path.join(self.base_dir, "test.csv")
