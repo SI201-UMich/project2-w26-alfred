@@ -236,7 +236,13 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    invalid_listings = []
+    for _, listing_id, policy_number, _, _, _, _ in data:
+        if policy_number in ["Pending", "Exempt"]:
+            continue
+        if not re.match(r"^STR-000\d{4}$", policy_number) and not re.match(r"^20\d{2}\-00\d{4}STR$", policy_number):
+            invalid_listings.append(listing_id)
+    return invalid_listings
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -330,7 +336,8 @@ class TestCases(unittest.TestCase):
     def test_validate_policy_numbers(self):
         # TODO: Call validate_policy_numbers() on detailed_data and save the result into a variable invalid_listings.
         # TODO: Check that the list contains exactly "16204265" for this dataset.
-        pass
+        invalid_listings = validate_policy_numbers(self.detailed_data)
+        self.assertEqual(invalid_listings, ["16204265"])
 
 
 def main():
