@@ -102,6 +102,7 @@ def get_listing_details(listing_id) -> dict:
                 break
         #room type parsing
         subs = soup.find_all(["h1", "h2"])
+        room_type = ""
         for sub in subs:
             if "private room" in sub.get_text().lower():
                 room_type = "Private Room"
@@ -109,9 +110,8 @@ def get_listing_details(listing_id) -> dict:
             elif "shared room" in sub.get_text().lower():
                 room_type = "Shared Room"
                 break
-            else:
-                room_type = "Entire Room"
-                break
+        if room_type == "":
+            room_type = "Entire Room"             
         #location rating parsing
         location_rating = 0.0
         divs = soup.find_all("div", class_="_y1ba89")
@@ -177,7 +177,12 @@ def output_csv(data, filename) -> None:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    sorted_data = sorted(data, key=lambda x: x[6], reverse=True)
+    with open(filename, 'w', newline='', encoding="utf-8-sig") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["listing_title", "listing_id", "policy_number", "host_type", "host_name", "room_type", "location_rating"])
+        for row in sorted_data:
+            writer.writerow(row)
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -200,7 +205,17 @@ def avg_location_rating_by_room_type(data) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    ratings = {}
+    counts = {}
+    for _, _, _, _, _, room_type, location_rating in data:
+        if location_rating == 0.0:
+            continue
+        ratings[room_type] = ratings.get(room_type, 0) + location_rating
+        counts[room_type] = counts.get(room_type, 0) + 1
+    for room_type in ratings:
+        ratings[room_type] /= counts[room_type]
+    return ratings
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -294,15 +309,23 @@ class TestCases(unittest.TestCase):
         out_path = os.path.join(self.base_dir, "test.csv")
 
         # TODO: Call output_csv() to write the detailed_data to a CSV file.
+        output_csv(self.detailed_data, out_path)
         # TODO: Read the CSV back in and store rows in a list.
+        with open(out_path, newline='', encoding="utf-8-sig") as csvfile:
+            reader = csv.reader(csvfile)
+            rows = list(reader)
         # TODO: Check that the first data row matches ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"].
+        self.assertEqual(rows[1], ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"])
 
         os.remove(out_path)
 
     def test_avg_location_rating_by_room_type(self):
         # TODO: Call avg_location_rating_by_room_type() and save the output.
         # TODO: Check that the average for "Private Room" is 4.9.
-        pass
+
+        ratings = avg_location_rating_by_room_type(self.detailed_data)
+        private_room_avg = ratings.get("Private Room", 0)
+        self.assertEqual(private_room_avg, 4.9)
 
     def test_validate_policy_numbers(self):
         # TODO: Call validate_policy_numbers() on detailed_data and save the result into a variable invalid_listings.
