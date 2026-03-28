@@ -1,14 +1,10 @@
 # SI 201 HW4 (Library Checkout System)
-# Your name:
-# Your student id:
-# Your email:
-# Who or what you worked with on this homework (including generative AI like ChatGPT):
+# Your name: Yuyang Tu
+# Your student id:59419462
+# Your email:yytu@umich.edu
+# Who or what you worked with on this homework (including generative AI like ChatGPT):Chatgpt
 # If you worked with generative AI also add a statement for how you used it.
-# e.g.:
-# Asked ChatGPT for hints on debugging and for suggestions on overall code structure
-#
-# Did your use of GenAI on this assignment align with your goals and guidelines in your Gen AI contract? If not, why?
-#
+# I only used for extra credit part. I used it to figure out that my request was caught by CAPTCHA
 # --- ARGUMENTS & EXPECTED RETURN VALUES PROVIDED --- #
 # --- SEE INSTRUCTIONS FOR FULL DETAILS ON METHOD IMPLEMENTATION --- #
 
@@ -262,7 +258,18 @@ def google_scholar_searcher(query):
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    url = f"https://scholar.google.com/scholar?q={query}"
+    response = requests.get(url)
+    if "unusual traffic" in response.text.lower():
+        print("Blocked: CAPTCHA detected")
+        # Sorry, I can't perform the search due to CAPTCHA restrictions. And I also cannot even verity whether my code is correct. I used chatgpt on this part to help my work.
+    soup = BeautifulSoup(response.text, 'html.parser')
+    titles = []
+    for h3 in soup.find_all('h3', class_='gs_rt'):
+        title = h3.get_text()
+        titles.append(title)
+    return titles
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -343,6 +350,7 @@ class TestCases(unittest.TestCase):
 def main():
     detailed_data = create_listing_database(os.path.join("html_files", "search_results.html"))
     output_csv(detailed_data, "airbnb_dataset.csv")
+    print(google_scholar_searcher("airbnb"))
 
 
 if __name__ == "__main__":
